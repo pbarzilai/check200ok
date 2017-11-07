@@ -2,7 +2,6 @@
 
 import time
 import pycurl
-from termcolor import colored
 import datetime
 import smtplib
 from email.MIMEMultipart import MIMEMultipart
@@ -29,8 +28,8 @@ def check_all():
 			if curl.getinfo(pycurl.HTTP_CODE) >=400:
 				body += site + '\n'
 				body += "    status code: %s" % curl.getinfo(pycurl.HTTP_CODE) + '\n'
-				body += 'Down since: ' + str(datetime.now()) + '\n\n'
-				startTime = datetime.now()
+				body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
+				startTime = datetime.datetime.now()
 				send_down(body, site)
 				SITESa.append(site)
 				#
@@ -48,8 +47,8 @@ def check_all():
 			errno, errstr = error
 			body += site + '\n'
 			body += str('Error: ') + str(errstr) + '\n'
-			body += 'Down since: ' + str(datetime.now()) + '\n\n'
-			startTime = datetime.now()
+			body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
+			startTime = datetime.datetime.now()
 			send_down(body, site)
 			SITESa.append(site)
 			#
@@ -87,10 +86,12 @@ def check_again():
 				if curl.getinfo(pycurl.HTTP_CODE) <400:
 					bodyA += site + '\n'
 					bodyA += "    status code: %s" % curl.getinfo(pycurl.HTTP_CODE) + '\n'
-					bodyA += 'Up since: ' + str(datetime.now()) + '\n'
+					bodyA += 'Up since: ' + str(datetime.datetime.now()) + '\n'
+					#bodyA += site + ' was down for: ' + str(datetime.datetime.now() - sT) + '\n'
 					send_up(bodyA, site)
 					SITESa.pop(SITESa.index(site))
 					#
+					#f.close()
 					f2 = open("sites.txt")
 					SITES = f2.read().splitlines()
 					f2.close()
@@ -98,13 +99,15 @@ def check_again():
 					SITES.append(site)
 					f2.write('\n'.join(SITES))
 					f2.close()
+					#f = open("sites_short.txt")
+					#SITES = f.read().splitlines()
 					#
 			except pycurl.error, error:
 				continue
 
 def send_up(b, s):
 	server = smtplib.SMTP('192.168.*.*', 25)
-	fromaddr = "do-not-reply@*.com"
+	fromaddr = "*@*.com"
 	toaddr = "*@*.com"
 	msg = MIMEMultipart()
 	msg['From'] = fromaddr
@@ -117,7 +120,7 @@ def send_up(b, s):
 
 def send_down(b, s):
 	server = smtplib.SMTP('192.168.*.*', 25)
-	fromaddr = "do-not-reply@*.com"
+	fromaddr = "*@*.com"
 	toaddr = "*@*.com"
 	msg = MIMEMultipart()
 	msg['From'] = fromaddr
