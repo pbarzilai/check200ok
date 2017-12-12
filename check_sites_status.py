@@ -13,12 +13,13 @@ def check_all():
 	params = config()
 	conn_sql = psycopg2.connect(**params)
 	cur = conn_sql.cursor()
-	cur.execute('SELECT hostname FROM sites_full order by id')
-	#cur.execute('SELECT hostname FROM sites_full where id = 26')
+	cur.execute('SELECT hostname FROM sites_full_test order by id')
 	for hostname in cur:
 		now = datetime.datetime.now()
 		body = ""
+		mDOWN = ' is Down'
 		try:
+			hostname = str(''.join(hostname))
 			curl = pycurl.Curl()
 			curl.setopt(pycurl.URL, 'http://'+hostname)
 			curl.setopt(pycurl.USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36')
@@ -32,9 +33,9 @@ def check_all():
 				body += "    status code: %s" % curl.getinfo(pycurl.HTTP_CODE) + '\n'
 				body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
 				startTime = datetime.datetime.now()
-				#send_mail(body, hostname, ' is Down')
-				query = "UPDATE sites_full SET online = B'0' WHERE HOSTNAME = %s"
-				data = (hostname)
+				#send_mail(body, hostname, mDOWN)
+				query = "UPDATE sites_full_test SET online = %s where HOSTNAME = %s"
+				data = ('False', hostname)
 				cur.execute(query, data)
 				conn_sql.commit()
 				time.sleep(5)
@@ -45,9 +46,9 @@ def check_all():
 			body += str('Error: ') + str(errstr) + '\n'
 			body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
 			startTime = datetime.datetime.now()
-			#send_mail(body, hostname, ' is Down')
-			query = "UPDATE sites_full SET online = B'0' WHERE HOSTNAME = %s"
-			data = (hostname)
+			#send_mail(body, hostname, mDOWN)
+			query = "UPDATE sites_full_test SET online = %s WHERE HOSTNAME = %s"
+			data = ('False', hostname)
 			cur.execute(query, data)
 			conn_sql.commit()
 			time.sleep(5)
@@ -64,11 +65,12 @@ def check_again():
 	params = config()
 	conn_sql = psycopg2.connect(**params)
 	cur = conn_sql.cursor()
-	cur.execute('SELECT hostname FROM sites_full ORDER BY id WHERE online = 0')
+	cur.execute('SELECT hostname FROM sites_full_test ORDER BY id WHERE online = False')
 	if cur >0:
 		for hostname in cur:
 			time.sleep(30)
 			bodyA = ""
+			mUP = ' is now Up'
 			try:
 				curl = pycurl.Curl()
 				curl.setopt(pycurl.URL, 'http://'+hostname)
@@ -82,14 +84,14 @@ def check_again():
 					bodyA += hostname + '\n'
 					bodyA += "    status code: %s" % curl.getinfo(pycurl.HTTP_CODE) + '\n'
 					bodyA += 'Up since: ' + str(datetime.datetime.now()) + '\n'
-					send_mail(bodyA, hostname, ' is now Up')
-					query = "UPDATE sites_full SET online = B'1' WHERE HOSTNAME = %s"
-					data = (hostname)
+					#send_mail(bodyA, hostname, mUP)
+					query = "UPDATE sites_full_test SET online = %s WHERE HOSTNAME = %s"
+					data = ('True', hostname)
 					cur.execute(query, data)
 					conn_sql.commit()
 			except pycurl.error, error:
 				continue
-			cur.execute('SELECT hostname FROM sites_full ORDER BY id WHERE online = 0')
+			cur.execute('SELECT hostname FROM sites_full_test ORDER BY id WHERE online = False')
 			if cur >0:
 				continue
 			else:
@@ -101,8 +103,8 @@ def check_again():
 
 def send_mail(b, s, msgS):
 	server = smtplib.SMTP('192.168.*.*', 25)
-	fromaddr = "*@*.com"
-	toaddr = "*@*.com"
+	fromaddr = "-@-"
+	toaddr = "-@-"
 	msg = MIMEMultipart()
 	msg['From'] = fromaddr
 	msg['To'] = toaddr
