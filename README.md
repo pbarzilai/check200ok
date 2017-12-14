@@ -6,7 +6,7 @@ A simple script that monitors multiple websites and sends an email alert when a 
 
 <b>Usage:</b>
 
-     -Create a file "sites.txt" with a list of websites on a separate line each, without the http:// prefix.
+     -
 
 
 <b>Compatibility:</b>
