@@ -8,7 +8,20 @@ import datetime
 import smtplib
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+import filelock
 
+def stop_if_already_running():
+	lock = filelock.FileLock("lock.txt")
+	lock.timeout = 2
+	#with lock:
+	try:
+		lock.acquire()
+		check_again()
+						
+	except filelock.Timeout:
+		print 'Script is already running.'
+		pass
+		
 def check_again():
 	params = config()
 	conn_sql = psycopg2.connect(**params)
@@ -17,12 +30,11 @@ def check_again():
 	
 	if cur >0:
 		for hostname in cur:
-			#time.sleep(30)
+			time.sleep(30)
 			bodyA = ""
 			mUP = ' is now Up'
 			try:
 				hostname = str(''.join(hostname))
-				print hostname
 				curl = pycurl.Curl()
 				curl.setopt(pycurl.URL, 'http://'+hostname)
 				curl.setopt(pycurl.USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36')
@@ -73,7 +85,7 @@ def send_mail(b, s, msgS):
 	server.sendmail(fromaddr, toaddr, text)
 
 def main():
-	check_again()
-	
+	stop_if_already_running()
+		
 if __name__ == "__main__":
 	main()
