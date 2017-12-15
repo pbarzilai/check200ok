@@ -14,8 +14,9 @@ def check_all():
 		params = config()
 		conn_sql = psycopg2.connect(**params)
 		cur = conn_sql.cursor()
-		cur.execute('SELECT hostname FROM sites_full_test WHERE online = True')
-	
+		query = "SELECT hostname FROM sites_full_test WHERE online = %s"
+		data = ('true',)
+		cur.execute(query, data)
 		for hostname in cur:
 			now = datetime.datetime.now()
 			body = ""
@@ -38,8 +39,12 @@ def check_all():
 					send_mail(body, hostname, mDOWN)
 					query = "UPDATE sites_full_test SET online = %s, down_since = %s where HOSTNAME = %s"
 					data = ('False', startTime, hostname)
+					conn_sql = psycopg2.connect(**params)
+					cur = conn_sql.cursor()
 					cur.execute(query, data)
 					conn_sql.commit()
+					cur.close()
+					conn_sql.close()
 					time.sleep(5)
 					body = ''
 			#except (psycopg2.ProgrammingError, IndexError, pycurl.error, error) as e:
@@ -52,8 +57,12 @@ def check_all():
 				send_mail(body, hostname, mDOWN)
 				query = "UPDATE sites_full_test SET online = %s, down_since = %s where HOSTNAME = %s"
 				data = ('False', startTime, hostname)
+				conn_sql = psycopg2.connect(**params)
+				cur = conn_sql.cursor()
 				cur.execute(query, data)
 				conn_sql.commit()
+				cur.close()
+				conn_sql.close()
 				time.sleep(5)
 				body = ''
 				continue
@@ -63,6 +72,7 @@ def check_all():
 		#f.write(now.strftime("%Y-%m-%d %H:%M") + ' Total Time Taken: ' + str(datetime.datetime.now() - now) + '\n')
 		#f.close()
 	except (psycopg2.ProgrammingError, IndexError, pycurl.error) as e:
+		#print e
 		pass
 	
 def send_mail(b, s, msgS):

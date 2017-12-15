@@ -22,6 +22,7 @@ def check_again():
 			mUP = ' is now Up'
 			try:
 				hostname = str(''.join(hostname))
+				print hostname
 				curl = pycurl.Curl()
 				curl.setopt(pycurl.URL, 'http://'+hostname)
 				curl.setopt(pycurl.USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36')
@@ -52,8 +53,6 @@ def check_again():
 				continue
 			else:
 				break
-	#else:
-		#return
 	cur.close()
 	conn_sql.close()
 
@@ -76,6 +75,5 @@ def send_mail(b, s, msgS):
 def main():
 	check_again()
 	
-
 if __name__ == "__main__":
 	main()
