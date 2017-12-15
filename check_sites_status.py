@@ -14,7 +14,7 @@ def check_all():
 		params = config()
 		conn_sql = psycopg2.connect(**params)
 		cur = conn_sql.cursor()
-		query = "SELECT hostname FROM sites_full_test WHERE online = %s"
+		query = "SELECT hostname FROM sites_full_test2 WHERE online = %s"
 		data = ('true',)
 		cur.execute(query, data)
 		for hostname in cur:
@@ -37,7 +37,7 @@ def check_all():
 					body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
 					startTime = str(datetime.datetime.now())
 					send_mail(body, hostname, mDOWN)
-					query = "UPDATE sites_full_test SET online = %s, down_since = %s where HOSTNAME = %s"
+					query = "UPDATE sites_full_test2 SET online = %s, down_since = %s where HOSTNAME = %s"
 					data = ('False', startTime, hostname)
 					conn_sql = psycopg2.connect(**params)
 					cur = conn_sql.cursor()
@@ -55,7 +55,7 @@ def check_all():
 				body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
 				startTime = str(datetime.datetime.now())
 				send_mail(body, hostname, mDOWN)
-				query = "UPDATE sites_full_test SET online = %s, down_since = %s where HOSTNAME = %s"
+				query = "UPDATE sites_full_test2 SET online = %s, down_since = %s where HOSTNAME = %s"
 				data = ('False', startTime, hostname)
 				conn_sql = psycopg2.connect(**params)
 				cur = conn_sql.cursor()
