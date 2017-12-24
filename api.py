@@ -4,8 +4,10 @@ import sys
 import psycopg2
 from config import config
 from flask import Flask, jsonify, request, json
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/offline_sites')
 def get():

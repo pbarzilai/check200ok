@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="wrapper" ng-app="myApp" ng-controller="sitesCtrl">
+  
+<div class="table">
+    
+    <div class="row header">
+      <div class="cell">
+        Hostname:
+      </div>
+      <div class="cell">
+        Online:
+      </div>
+    </div>
+    
+    <div class="row" ng-repeat="x in names">
+      <div class="cell" data-title="Hostname">
+        {{ x.hostname }}
+      </div>
+      <div class="cell" data-title="Online">
+        {{ x.online }}
+      </div>
+    </div>
+</div>
+       
+</div>
+
+<script>
+var app = angular.module('myApp', []);
+app.controller('sitesCtrl', function($scope, $http) {
+    $http.get("http://127.0.0.1:5002/offline_sites")
+    .then(function (response) {$scope.names = response.data;});
+});
+</script>
+
+</body>
+</html>
+
