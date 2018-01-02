@@ -7,6 +7,7 @@ import pycurl
 import datetime
 import smtplib
 import sys
+import cStringIO
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from multiprocessing import Pool
@@ -38,10 +39,12 @@ def curlhttp(hostname):
 		#print hostname
 		#sys.stdout.flush()
 		curl = pycurl.Curl()
+		buff = cStringIO.StringIO()
 		curl.setopt(pycurl.URL, 'http://'+hostname)
 		curl.setopt(pycurl.USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36')
 		curl.setopt(pycurl.FOLLOWLOCATION, 1)
-		curl.setopt(pycurl.NOBODY, True)
+		#curl.setopt(pycurl.NOBODY, True)
+		curl.setopt(pycurl.WRITEFUNCTION, buff.write)
 		curl.setopt(pycurl.SSL_VERIFYPEER, 0)
 		curl.perform()
 
@@ -49,8 +52,12 @@ def curlhttp(hostname):
 			body += hostname + '\n'
 			body += "    status code: %s" % curl.getinfo(pycurl.HTTP_CODE) + '\n'
 			body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
+			content = buff.getvalue()
+			#body += content
+			#print content
+			#sys.stdout.flush()
 			startTime = str(datetime.datetime.now())
-			send_mail(body, hostname, mDOWN)
+			send_mail(body, content, hostname, mDOWN)
 			query = "UPDATE sites_full SET online = %s, down_since = %s where HOSTNAME = %s"
 			data = ('False', startTime, hostname)
 			params = config()
@@ -65,8 +72,9 @@ def curlhttp(hostname):
 		body += hostname + '\n'
 		body += str('Error: ') + str(errstr) + '\n'
 		body += 'Down since: ' + str(datetime.datetime.now()) + '\n\n'
+		content = buff.getvalue()
 		startTime = str(datetime.datetime.now())
-		send_mail(body, hostname, mDOWN)
+		send_mail(body, content, hostname, mDOWN)
 		query = "UPDATE sites_full SET online = %s, down_since = %s where HOSTNAME = %s"
 		data = ('False', startTime, hostname)
 		params = config()
@@ -79,7 +87,7 @@ def curlhttp(hostname):
 		pass
 	return body
 
-def send_mail(b, s, msgS):
+def send_mail(b, c, s, msgS):
 	f = open("email_settings.txt")
 	for line in f:
 		fields = line.strip().split()
@@ -91,6 +99,7 @@ def send_mail(b, s, msgS):
 	msg['To'] = toaddr
 	msg['Subject'] = s + msgS
 	msg.attach(MIMEText(b, 'plain'))
+	msg.attach(MIMEText(c, 'html'))
 	server.ehlo()
 	text = msg.as_string()
 	server.sendmail(fromaddr, toaddr, text)
