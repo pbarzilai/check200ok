@@ -53,6 +53,7 @@ def check_again():
 					curl.setopt(pycurl.URL, 'http://'+hostname)
 					curl.setopt(pycurl.USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36')
 					curl.setopt(pycurl.FOLLOWLOCATION, 1)
+					curl.setopt(pycurl.CONNECTTIMEOUT, 20)
 					curl.setopt(pycurl.NOBODY, True)
 					curl.setopt(pycurl.SSL_VERIFYPEER, 0)
 					curl.perform()
