@@ -3,7 +3,7 @@
 import time
 import psycopg2
 from config import config
-import pycurl
+import requests
 import datetime
 import smtplib
 from email.MIMEMultipart import MIMEMultipart
@@ -35,51 +35,49 @@ def check_again():
 			params = config()
 			conn_sql = psycopg2.connect(**params)
 			cur = conn_sql.cursor()
-			cur.execute('SELECT hostname FROM sites_full WHERE online = False')
+			cur.execute('SELECT hostname FROM sites_full WHERE online = False AND check_status = True')
 			row = cur.fetchone()
 			if row is None:
 				break
-			cur.execute('SELECT hostname FROM sites_full WHERE online = False')
+			cur.execute('SELECT hostname FROM sites_full WHERE online = False AND check_status = True')
 			for hostname in cur:
 				#print hostname
 				time.sleep(1)
 				bodyA = ""
-				mUP = ' is now Up'
+				#mUP = ' is now Up'
+				mUP = ''
+				headers = {}
+				headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36'
 				try:
 					hostname = str(''.join(hostname))
-					#print hostname
-					#sys.stdout.flush()
-					curl = pycurl.Curl()
-					curl.setopt(pycurl.URL, 'http://'+hostname)
-					curl.setopt(pycurl.USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36')
-					curl.setopt(pycurl.FOLLOWLOCATION, 1)
-					curl.setopt(pycurl.CONNECTTIMEOUT, 20)
-					curl.setopt(pycurl.NOBODY, True)
-					curl.setopt(pycurl.SSL_VERIFYPEER, 0)
-					curl.perform()
+					resp = requests.get('http://'+hostname, timeout=(2, 4), headers=headers)
+					
 
-					if curl.getinfo(pycurl.HTTP_CODE) <400:
+					if resp.status_code <400:
 						query = "SELECT down_since FROM sites_full WHERE HOSTNAME = %s"
 						data = (hostname,)
 						cur.execute(query, data)
 						data = cur.fetchone()
 						downsince = data[0]
 						bodyA += hostname + '\n'
-						bodyA += "    status code: %s" % curl.getinfo(pycurl.HTTP_CODE) + '\n'
+						bodyA += "    status code: %s" % resp.status_code + '\n'
 						a = datetime.datetime.now() - downsince
 						hours, minutes, seconds = convert_timedelta(a)
 						bodyA += 'Site was down for: ' + '{} hours, {} minutes, {} seconds.'.format(hours, minutes, seconds) + '\n'
 						send_mail(bodyA, hostname, mUP)
+						resp.close()
 						reset_down_since = None
 						query = "UPDATE sites_full SET online = %s, down_since = %s WHERE HOSTNAME = %s"
 						data = ('True', reset_down_since, hostname)
 						cur.execute(query, data)
 						conn_sql.commit()
-				except pycurl.error, error:
+				except requests.exceptions.RequestException, error:
+					resp.close()
 					continue
 			cur.close()
 			conn_sql.close()
 		except psycopg2.ProgrammingError:
+			resp.close()
 			continue
 		time.sleep(30)
 					
